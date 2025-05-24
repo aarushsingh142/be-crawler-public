@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Crawler Service</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #333; }
+        form { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
+        input[type="text"] { width: 70%; padding: 8px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .messages { margin-bottom: 20px; }
+        .messages .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .messages .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .messages .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .status-PENDING { color: orange; font-weight: bold; }
+        .status-IN_PROGRESS { color: blue; font-weight: bold; }
+        .status-COMPLETED { color: green; font-weight: bold; }
+        .status-FAILED { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Web Crawling Service</h1>
+
+        <div class="messages">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <form action="{% url 'request_crawl' %}" method="post">
+            {% csrf_token %}
+            <label for="url">Enter URL to Crawl:</label>
+            <input type="text" id="url" name="url" placeholder="e.g., http://example.com" required>
+            <button type="submit">Start Crawl</button>
+        </form>
+
+        <h2>Recent Crawl Requests</h2>
+        {% if crawl_requests %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>URL</th>
+                        <th>Status</th>
+                        <th>Started At</th>
+                        <th>Completed At</th>
+                        <th>Task ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in crawl_requests %}
+                        <tr>
+                            <td><a href="{{ req.url }}" target="_blank" rel="noopener noreferrer">{{ req.url }}</a></td>
+                            <td class="status-{{ req.status }}">{{ req.status }}</td>
+                            <td>{{ req.started_at|default:"N/A" }}</td>
+                            <td>{{ req.completed_at|default:"N/A" }}</td>
+                            <td>{{ req.task_id|default:"N/A" }}</td>
+                            <td>
+                                {% if req.status == 'COMPLETED' %}
+                                    <a href="{% url 'view_crawled_data' req.id %}">View Data</a>
+                                {% elif req.status == 'PENDING' or req.status == 'IN_PROGRESS' %}
+                                    <span style="color: gray;">Processing...</span>
+                                {% else %}
+                                    <a href="{% url 'request_crawl' %}" onclick="event.preventDefault(); document.getElementById('resubmit-{{ req.id }}').submit();">Resubmit</a>
+                                    <form id="resubmit-{{ req.id }}" action="{% url 'request_crawl' %}" method="post" style="display: none;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="url" value="{{ req.url }}">
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No crawl requests yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crawled Data for {{ crawl_request.url }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1, h2 { color: #333; }
+        .data-section { background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; padding: 20px; margin-bottom: 20px; }
+        .data-section p { margin-bottom: 10px; }
+        .data-section strong { display: block; margin-bottom: 5px; color: #555; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        pre { background-color: #eee; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crawled Data for: <a href="{{ crawl_request.url }}" target="_blank" rel="noopener noreferrer">{{ crawl_request.url }}</a></h1>
+        <p><a href="{% url 'crawl_dashboard' %}">Back to Dashboard</a></p>
+
+        {% if page_data %}
+            <div class="data-section">
+                <h2>Page Metadata</h2>
+                <p><strong>Title:</strong> {{ page_data.title|default:"N/A" }}</p>
+                <p><strong>Description:</strong> {{ page_data.description|default:"N/A" }}</p>
+                <p><strong>Relevant Topics:</strong> {{ page_data.relevant_topics|default:"N/A" }}</p>
+                <p><strong>Crawled At:</strong> {{ page_data.crawled_at }}</p>
+            </div>
+
+            <div class="data-section">
+                <h2>Body Text (first 1000 characters)</h2>
+                <pre>{{ page_data.body_text|slice:":1000" }}...</pre>
+                {% if page_data.body_text|length > 1000 %}
+                    <p>(Full text available in database)</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <p>No data found for this crawl request yet, or crawl failed.</p>
+            {% if crawl_request.status != 'COMPLETED' %}
+                <p>Current Status: {{ crawl_request.status }}</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>
